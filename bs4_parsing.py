@@ -31,14 +31,15 @@ def headers_count(body) -> int:
 def max_links_len(body) -> int:
     mc = 0
     for href in body.find_all('a'):
-        sibs = [s.name for s in href.find_next_siblings()]
-        for i in range(len(sibs)):
-            if sibs[i] == 'a':
-                c = i+1
-            else:
-                break
-        if mc < c:
-            mc = c + 1
+        sibs = [s.name for s in [href] + href.find_next_siblings()]
+        if sibs:
+            for i in range(len(sibs)):
+                if sibs[i] == 'a':
+                    c = i + 1
+                else:
+                    break
+            if mc < c:
+                mc = c
     return mc
 
 def lists_count(body) -> int:
