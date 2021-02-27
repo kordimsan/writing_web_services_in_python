@@ -4,10 +4,9 @@ import re, os
 from pprint import pprint
 
 def parse(path_to_file):    
-    with open(path_to_file, 'r', encoding='utf-8') as f:
-        html = f.read()
-    soup = BeautifulSoup(html, 'lxml')
-    body = soup.find(id='bodyContent')
+    with open(path_to_file, encoding="utf-8") as file:
+        soup = BeautifulSoup(file, "lxml")
+        body = soup.find(id="bodyContent")
     imgs = imgs_count(body)
     headers = headers_count(body)
     linkslen = max_links_len(body)
@@ -15,31 +14,22 @@ def parse(path_to_file):
     return [imgs, headers, linkslen, lists]
 
 def imgs_count(body) -> int:
-    return len([w for w in [img.get('width',img.get('data-file-width',0)) for img in body.find_all('img')] if int(w) >= 200])
+    return len(body.find_all('img', width=lambda x: int(x or 0) > 199))
 
 def headers_count(body) -> int:
-    c = 0
-    for h in body.find_all(name = re.compile('h\d')):
-        if h.span:
-            if h.find('span','mw-headline')['id'][0] in ['E', 'T', 'C']:
-                c+=1
-        else:
-            if h.string[0] in ['E', 'T', 'C']:
-                c+=1
-    return c
+    return sum(1 for tag in body.find_all(name = re.compile('h\d')) if tag.get_text()[0] in "ETC")
 
 def max_links_len(body) -> int:
     mc = 0
     for href in body.find_all('a'):
-        sibs = [s.name for s in [href] + href.find_next_siblings()]
-        if sibs:
-            for i in range(len(sibs)):
-                if sibs[i] == 'a':
-                    c = i + 1
-                else:
-                    break
-            if mc < c:
-                mc = c
+        c = 1
+        for tag in href.find_next_siblings():
+            if tag.name == 'a':
+                c += 1
+            else:
+                break
+
+        mc = c if c > mc else mc
     return mc
 
 def lists_count(body) -> int:
