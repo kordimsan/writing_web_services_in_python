@@ -42,32 +42,37 @@ def max_links_len(body) -> int:
     return mc
 
 def lists_count(body) -> int:
-    return len([l for l in body.find_all(name = re.compile('[ou]l')) if (l.parent).name != 'li'])
+    return len([l for l in body.find_all(name = re.compile('[ou]l')) if not l.find_parent('li')])
 
-def bfs_paths(graph, start, goal):
-    queue = [(start, [start])]
-    while queue:
-        (vertex, path) = queue.pop(0)
-        for next in graph[vertex] - set(path):
-            if next == goal:
-                #print(path + [next])
-                yield path + [next]
-            else:
-                queue.append((next, path + [next]))
+
+class Bridge:
+    def __init__(self, path) -> None:
+        actual_pages = os.listdir(path=path)
+        self.graph = {}
+        for p in actual_pages:
+            with open(os.path.join(path, p), encoding="utf-8") as file:
+                links = re.findall(r"(?<=/wiki/)[\w()]+", file.read())
+            self.graph[p] = set(links) & set(actual_pages) - {p}
+        
+    def bfs_paths(self, graph, start, goal):
+        queue = [(start, [start])]
+        while queue:
+            (vertex, path) = queue.pop(0)
+            for next in graph[vertex] - set(path):
+                if next == goal:
+                    #print(path + [next])
+                    yield path + [next]
+                else:
+                    queue.append((next, path + [next]))
 
 def build_bridge(path, start_page, end_page):
     """возвращает список страниц, по которым можно перейти по ссылкам со start_page на
     end_page, начальная и конечная страницы включаются в результирующий список"""
 
-    actual_pages = os.listdir(path=path)
-    graph = {}
-    for p in actual_pages:
-        with open(os.path.join(path, p), encoding="utf-8") as file:
-            links = re.findall(r"(?<=/wiki/)[\w()]+", file.read())
-        graph[p] = set(links) & set(actual_pages) - {p}
+    bridge = Bridge(path)
     
     try:
-        return next(bfs_paths(graph, start_page, end_page))
+        return next(bridge.bfs_paths(bridge.graph, start_page, end_page))
     except StopIteration:
         return None
     
@@ -98,8 +103,8 @@ class TestParse(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    # result = build_bridge('wiki/', 'The_New_York_Times', 'Stone_Age')
-    # print(result)
+    # result = get_statistics('wiki/', 'The_New_York_Times', 'Stone_Age')
+    # pprint(result)
     # result = get_statistics('wiki/', 'The_New_York_Times', "Binyamina_train_station_suicide_bombing")
     # pprint(result)
     # print(parse('wiki/Stone_Age'))
