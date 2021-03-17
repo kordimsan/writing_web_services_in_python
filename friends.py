@@ -1,9 +1,9 @@
 from json.decoder import JSONDecodeError
 from datetime import datetime
 import requests
+import os
 
-ACCESS_TOKEN = '17da724517da724517da72458517b8abce117da17da' \
-               '72454d235c274f1a2be5f45ee711'
+ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
 API_URL = 'https://api.vk.com/method'
 V = '5.71'
 
